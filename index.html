@@ -5,16 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual Classroom Portal</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Firebase scripts first -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <script src="index.js"></script>
+    <!-- Your script last with defer -->
+    <script src="index.js" defer></script>
 </head>
 <body class="dark">
-    <div id="notification" class="notification"></div>
-    <h1>VEET Classroom</h1>
-<!-- Login Container -->
-<div class="login-container" id="login-sections">
+    <!-- ... rest of your existing body content ... -->
+        <div id="notification" class="notification"></div>
+        <h1>VEET Classroom</h1>
+
+    <!-- Update these button handlers -->
     <section id="teacher-auth" class="glass">
         <h2>Teacher Portal</h2>
         <div id="teacher-login-form">
@@ -22,7 +25,7 @@
             <input type="password" id="teacher-password" placeholder="Password">
             <button class="btn" onclick="loginUser(document.getElementById('teacher-email').value, document.getElementById('teacher-password').value)">Login as Teacher</button>
         </div>
-        <p>New teacher? <button class="btn" onclick="registerTeacher()">Register</button></p>
+        <p>New teacher? <button class="btn" onclick="showTeacherRegistration()">Register</button></p>
     </section>
 
     <section id="student-auth" class="glass">
@@ -33,10 +36,10 @@
             <input type="text" id="class-code" placeholder="Class Code">
             <button class="btn" onclick="loginUser(document.getElementById('student-email').value, document.getElementById('student-password').value)">Login as Student</button>
         </div>
-        <p>New student? <button class="btn" onclick="registerStudent()">Register</button></p>
+        <p>New student? <button class="btn" onclick="showStudentRegistration()">Register</button></p>
     </section>
-</div>
-
+    <!-- ... rest of your existing HTML ... -->
+    
 <!-- Registration forms (hidden by default) -->
 <div id="teacher-register-form" class="hidden">
     <input type="email" id="new-teacher-email" placeholder="Email">
@@ -62,49 +65,6 @@
 <div class="header-actions">
     <button class="btn" onclick="logoutUser()">Logout</button>
 </div>
-
-    <!-- Room Creation Section -->
-    <section id="room-creation" class="section glass hidden">
-        <div class="room-creation">
-            <h2>Welcome, <span id="teacher-name"></span></h2>
-            <p>Create a new classroom to get started</p>
-            <button class="btn" onclick="createNewClass()">Create New Classroom</button>
-            <div id="room-code" class="room-code hidden"></div>
-        </div>
-    </section>
-
-    <!-- Classroom Section -->
-    <section id="classroom-section" class="section glass hidden">
-        <h2>Classroom Dashboard</h2>
-        <div class="dashboard">
-            <div class="dashboard-card glass">
-                <h3>Class Code</h3>
-                <div id="current-class-code" class="room-code"></div>
-            </div>
-            <div class="dashboard-card glass">
-                <h3>Active Students</h3>
-                <div id="active-students">Loading...</div>
-            </div>
-        </div>
-
-        <div class="upload-section glass">
-            <h3>Upload Resources</h3>
-            <select id="resource-category" class="btn">
-                <option value="lecture">Lecture</option>
-                <option value="assignment">Assignment</option>
-                <option value="material">Study Material</option>
-            </select>
-            <input type="file" id="file-upload">
-            <input type="date" id="deadline" placeholder="Deadline (for assignments)">
-            <button class="btn" onclick="uploadResource()">Upload</button>
-        </div>
-
-        <div class="resources" id="resources-container">
-            <!-- Resources will be dynamically added here -->
-        </div>
-    </section>
-    
-
     
 </body>
 </html>
