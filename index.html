@@ -17,27 +17,28 @@
         <div id="notification" class="notification"></div>
         <h1>VEET Classroom</h1>
 
-    <!-- Update these button handlers -->
-    <section id="teacher-auth" class="glass">
-        <h2>Teacher Portal</h2>
-        <div id="teacher-login-form">
-            <input type="email" id="teacher-email" placeholder="Email">
-            <input type="password" id="teacher-password" placeholder="Password">
-            <button class="btn" onclick="loginUser(document.getElementById('teacher-email').value, document.getElementById('teacher-password').value)">Login as Teacher</button>
-        </div>
-        <p>New teacher? <button class="btn" onclick="showTeacherRegistration()">Register</button></p>
-    </section>
+    <!-- Teacher section -->
+<section id="teacher-auth" class="glass">
+    <h2>Teacher Portal</h2>
+    <div id="teacher-login-form">
+        <input type="email" id="teacher-email" placeholder="Email">
+        <input type="password" id="teacher-password" placeholder="Password">
+        <button class="btn" type="button" onclick="handleTeacherLogin()">Login as Teacher</button>
+    </div>
+    <p>New teacher? <button class="btn" type="button" onclick="showTeacherRegistration()">Register</button></p>
+</section>
 
-    <section id="student-auth" class="glass">
-        <h2>Student Portal</h2>
-        <div id="student-login-form">
-            <input type="email" id="student-email" placeholder="Email">
-            <input type="password" id="student-password" placeholder="Password">
-            <input type="text" id="class-code" placeholder="Class Code">
-            <button class="btn" onclick="loginUser(document.getElementById('student-email').value, document.getElementById('student-password').value)">Login as Student</button>
-        </div>
-        <p>New student? <button class="btn" onclick="showStudentRegistration()">Register</button></p>
-    </section>
+<!-- Student section -->
+<section id="student-auth" class="glass">
+    <h2>Student Portal</h2>
+    <div id="student-login-form">
+        <input type="email" id="student-email" placeholder="Email">
+        <input type="password" id="student-password" placeholder="Password">
+        <input type="text" id="class-code" placeholder="Class Code">
+        <button class="btn" type="button" onclick="handleStudentLogin()">Login as Student</button>
+    </div>
+    <p>New student? <button class="btn" type="button" onclick="showStudentRegistration()">Register</button></p>
+</section>
     <!-- ... rest of your existing HTML ... -->
     
 <!-- Registration forms (hidden by default) -->
