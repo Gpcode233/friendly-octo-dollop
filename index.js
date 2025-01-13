@@ -70,16 +70,6 @@ function showStudentRegistration() {
     document.getElementById('student-register-form').classList.remove('hidden');
 }
 
-function showTeacherRegistration() {
-    document.getElementById('login-sections').classList.add('hidden');
-    document.getElementById('teacher-register-form').classList.remove('hidden');
-}
-
-function showStudentRegistration() {
-    document.getElementById('login-sections').classList.add('hidden');
-    document.getElementById('student-register-form').classList.remove('hidden');
-}
-
 // Authentication Functions
 async function registerTeacher() {
     const email = document.getElementById('new-teacher-email').value;
