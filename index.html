@@ -10,21 +10,55 @@
 <body class="dark">
     <div id="notification" class="notification"></div>
     <h1>VEET Classroom</h1>
-    <!-- Login Container -->
-    <div class="login-container" id="login-sections">
-        <section id="teacher-login" class="glass">
-            <h2>Teacher Login</h2>
-            <input type="text" id="teacher-username" placeholder="Username">
-            <button class="btn" onclick="loginTeacher()">Login as Teacher</button>
-        </section>
+<!-- Login Container -->
+<div class="login-container" id="login-sections">
+    <section id="teacher-auth" class="glass">
+        <h2>Teacher Portal</h2>
+        <div id="teacher-login-form">
+            <input type="email" id="teacher-email" placeholder="Email">
+            <input type="password" id="teacher-password" placeholder="Password">
+            <button class="btn" onclick="loginUser(document.getElementById('teacher-email').value, document.getElementById('teacher-password').value)">Login as Teacher</button>
+        </div>
+        <p>New teacher? <button class="btn-link" onclick="showTeacherRegister()">Register here</button></p>
+    </section>
 
-        <section id="student-login" class="glass">
-            <h2>Student Login</h2>
-            <input type="text" id="student-username" placeholder="Username">
+    <section id="student-auth" class="glass">
+        <h2>Student Portal</h2>
+        <div id="student-login-form">
+            <input type="email" id="student-email" placeholder="Email">
+            <input type="password" id="student-password" placeholder="Password">
             <input type="text" id="class-code" placeholder="Class Code">
-            <button class="btn" onclick="loginStudent()">Join Class</button>
-        </section>
-    </div>
+            <button class="btn" onclick="loginUser(document.getElementById('student-email').value, document.getElementById('student-password').value)">Login as Student</button>
+        </div>
+        <p>New student? <button class="btn-link" onclick="showStudentRegister()">Register here</button></p>
+    </section>
+</div>
+
+<!-- Registration forms (hidden by default) -->
+<div id="teacher-register-form" class="hidden">
+    <input type="email" id="new-teacher-email" placeholder="Email">
+    <input type="password" id="new-teacher-password" placeholder="Password">
+    <input type="password" id="new-teacher-password-confirm" placeholder="Confirm Password">
+    <button class="btn" onclick="registerTeacher(
+        document.getElementById('new-teacher-email').value,
+        document.getElementById('new-teacher-password').value
+    )">Register</button>
+</div>
+
+<div id="student-register-form" class="hidden">
+    <input type="email" id="new-student-email" placeholder="Email">
+    <input type="password" id="new-student-password" placeholder="Password">
+    <input type="password" id="new-student-password-confirm" placeholder="Confirm Password">
+    <button class="btn" onclick="registerStudent(
+        document.getElementById('new-student-email').value,
+        document.getElementById('new-student-password').value
+    )">Register</button>
+</div>
+
+<!-- Add logout button to classroom section -->
+<div class="header-actions">
+    <button class="btn" onclick="logoutUser()">Logout</button>
+</div>
 
     <!-- Room Creation Section -->
     <section id="room-creation" class="section glass hidden">
