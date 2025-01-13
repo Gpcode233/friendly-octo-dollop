@@ -27,6 +27,29 @@ const appData = {
     theme: 'dark'
 };
 
+function handleTeacherLogin() {
+    const email = document.getElementById('teacher-email').value;
+    const password = document.getElementById('teacher-password').value;
+    if (!email || !password) {
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+    loginUser(email, password, 'teacher');
+}
+
+function handleStudentLogin() {
+    const email = document.getElementById('student-email').value;
+    const password = document.getElementById('student-password').value;
+    const classCode = document.getElementById('class-code').value;
+    if (!email || !password) {
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+    loginUser(email, password, 'student', classCode);
+}
+
+
+
 // UI Helper Functions
 function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
@@ -35,6 +58,16 @@ function showNotification(message, type = 'success') {
     setTimeout(() => {
         notification.classList.remove('show');
     }, 3000);
+}
+
+function showTeacherRegistration() {
+    document.getElementById('login-sections').classList.add('hidden');
+    document.getElementById('teacher-register-form').classList.remove('hidden');
+}
+
+function showStudentRegistration() {
+    document.getElementById('login-sections').classList.add('hidden');
+    document.getElementById('student-register-form').classList.remove('hidden');
 }
 
 function showTeacherRegistration() {
@@ -174,6 +207,8 @@ async function downloadResource(resourceId) {
 }
 
 // Make functions available globally
+window.handleTeacherLogin = handleTeacherLogin;
+window.handleStudentLogin = handleStudentLogin;
 window.showTeacherRegistration = showTeacherRegistration;
 window.showStudentRegistration = showStudentRegistration;
 window.registerTeacher = registerTeacher;
