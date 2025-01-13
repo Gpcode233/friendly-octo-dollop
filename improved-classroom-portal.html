@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Classroom Portal</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="index.js"></script>
+</head>
+<body class="dark">
+    <div id="notification" class="notification"></div>
+    <h1>VEET Classroom</h1>
+    <!-- Login Container -->
+    <div class="login-container" id="login-sections">
+        <section id="teacher-login" class="glass">
+            <h2>Teacher Login</h2>
+            <input type="text" id="teacher-username" placeholder="Username">
+            <button class="btn" onclick="loginTeacher()">Login as Teacher</button>
+        </section>
+
+        <section id="student-login" class="glass">
+            <h2>Student Login</h2>
+            <input type="text" id="student-username" placeholder="Username">
+            <input type="text" id="class-code" placeholder="Class Code">
+            <button class="btn" onclick="loginStudent()">Join Class</button>
+        </section>
+    </div>
+
+    <!-- Room Creation Section -->
+    <section id="room-creation" class="section glass hidden">
+        <div class="room-creation">
+            <h2>Welcome, <span id="teacher-name"></span></h2>
+            <p>Create a new classroom to get started</p>
+            <button class="btn" onclick="createNewClass()">Create New Classroom</button>
+            <div id="room-code" class="room-code hidden"></div>
+        </div>
+    </section>
+
+    <!-- Classroom Section -->
+    <section id="classroom-section" class="section glass hidden">
+        <h2>Classroom Dashboard</h2>
+        <div class="dashboard">
+            <div class="dashboard-card glass">
+                <h3>Class Code</h3>
+                <div id="current-class-code" class="room-code"></div>
+            </div>
+            <div class="dashboard-card glass">
+                <h3>Active Students</h3>
+                <div id="active-students">Loading...</div>
+            </div>
+        </div>
+
+        <div class="upload-section glass">
+            <h3>Upload Resources</h3>
+            <select id="resource-category" class="btn">
+                <option value="lecture">Lecture</option>
+                <option value="assignment">Assignment</option>
+                <option value="material">Study Material</option>
+            </select>
+            <input type="file" id="file-upload">
+            <input type="date" id="deadline" placeholder="Deadline (for assignments)">
+            <button class="btn" onclick="uploadResource()">Upload</button>
+        </div>
+
+        <div class="resources" id="resources-container">
+            <!-- Resources will be dynamically added here -->
+        </div>
+    </section>
+    
+
+    
+</body>
+</html>

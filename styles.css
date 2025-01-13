@@ -1,0 +1,131 @@
+
+:root {
+    --primary: #6B46C1;
+    --accent: #D53F8C;
+    --glass: rgba(255, 255, 255, 0.1);
+    --background: #1A202C;
+    --text: #FFFFFF;
+    --card-bg: rgba(26, 32, 44, 0.8);
+}
+
+body.dark {
+    --background: #1A202C;
+    --text: #FFFFFF;
+    --card-bg: rgba(26, 32, 44, 0.8);
+}
+
+body.light {
+    --background: #F7FAFC;
+    --text: #1A202C;
+    --card-bg: rgba(255, 255, 255, 0.8);
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    transition: background-color 0.3s ease;
+}
+
+.login-container {
+    max-width: 800px;
+    margin: 40px auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    padding: 20px;
+}
+
+.glass {
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    margin: 10px 0;
+}
+
+.btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin: 10px 0;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+input, select {
+    background: var(--glass);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text);
+    padding: 12px;
+    border-radius: 6px;
+    margin: 10px 0;
+    width: calc(100% - 24px);
+    font-size: 16px;
+}
+
+.section {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.room-creation {
+    text-align: center;
+    max-width: 600px;
+    margin: 40px auto;
+}
+
+.room-code {
+    font-size: 24px;
+    padding: 20px;
+    background: var(--primary);
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    color: white;
+    transform: translateX(200%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    background: rgba(72, 187, 120, 0.9);
+}
+
+.notification.error {
+    background: rgba(245, 101, 101, 0.9);
+}
+h1{
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* Rest of your existing styles */
