@@ -34,7 +34,7 @@ body {
     max-width: 800px;
     margin: 40px auto;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 40px;
     padding: 20px;
 }
@@ -148,3 +148,24 @@ h1{
 .hidden {
     display: none !important;
 }
+/* Add styles for auth sections */
+#teacher-auth, #student-auth {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Update input and button styles */
+input, .btn {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 10px 0;
+}
+
+/* Add styles for register forms */
+#teacher-register-form, #student-register-form {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
