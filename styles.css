@@ -182,7 +182,7 @@ input, .btn {
         display: inline-block;
         width: 45%;
         margin: 0 2.5%;
-        vertical-align: top;
+        vertical-align: center;
     }
 }
 
