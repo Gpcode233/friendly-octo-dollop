@@ -57,7 +57,8 @@ async function handleTeacherLogin() {
       const userData = snapshot.val();
       if (userData && userData.role === 'teacher') {
         showNotification('Teacher login successful!');
-        // Add your teacher dashboard redirect logic here
+        // Redirect to the teacher dashboard page
+        window.location.href = 'teacher-dashboard.html'; // Update this to the actual page URL
       } else {
         signOut(auth);
         showNotification('Access denied: Not a teacher account', 'error');
