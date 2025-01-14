@@ -118,7 +118,30 @@ function showStudentRegistration() {
 }
 
 // Authentication Functions
-// ... (keep existing Firebase config and initialization)
+
+// Authentication Functions
+async function handleTeacherLogin() {
+    const email = document.getElementById('teacher-email')?.value;
+    const password = document.getElementById('teacher-password')?.value;
+    
+    if (!email || !password) {
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+    await loginUser(email, password, 'teacher');
+}
+
+async function handleStudentLogin() {
+    const email = document.getElementById('student-email')?.value;
+    const password = document.getElementById('student-password')?.value;
+    const classCode = document.getElementById('class-code')?.value;
+    
+    if (!email || !password) {
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+    await loginUser(email, password, 'student', classCode);
+}
 
 async function registerTeacher(email, password) {
     try {
