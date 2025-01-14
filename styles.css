@@ -1,3 +1,4 @@
+
 :root {
     --primary: #6B46C1;
     --accent: #D53F8C;
@@ -203,5 +204,8 @@ body {
         content: '\f011'; /* FontAwesome Unicode for power off icon */
         font-family: 'FontAwesome';
         font-size: 20px;
+    }
+    .header-actions .btn span {
+        display: none;
     }
 }
