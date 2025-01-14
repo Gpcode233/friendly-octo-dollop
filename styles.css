@@ -176,13 +176,22 @@ body {
   }
 }
 
-/* Reduce logout button size on smaller screens */
+/* Adjust the layout for screens with width less than 522px */
 @media (max-width: 522px) {
+    h1 {
+        margin-bottom: 20px;
+    }
+    #teacher-auth, #student-auth {
+        display: block;
+        width: 100%;
+        max-width: none;
+        margin: 10px 0;
+    }
     .header-actions .btn {
         width: 40px;
         height: 40px;
         padding: 0;
-        border-radius: 50%;
+        border-radius: 6px; /* Adjusted to make it a square */
         display: flex;
         align-items: center;
         justify-content: center;
