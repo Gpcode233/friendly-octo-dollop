@@ -44,21 +44,6 @@ function showNotification(message, type = 'success') {
   }
 }
 
-// Toggle visibility functions
-function toggleForm(formToShow, formToHide) {
-  document.getElementById(formToShow).classList.remove('hidden');
-  document.getElementById(formToHide).classList.add('hidden');
-}
-
-// Registration form display functions
-function showTeacherRegistration() {
-  toggleForm('teacher-register-form', 'student-register-form');
-}
-
-function showStudentRegistration() {
-  toggleForm('student-register-form', 'teacher-register-form');
-}
-
 // Authentication handlers
 async function handleTeacherLogin() {
   const email = document.getElementById('teacher-email').value;
@@ -68,7 +53,6 @@ async function handleTeacherLogin() {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const userRef = ref(database, `users/${userCredential.user.uid}`);
     
-    // Verify if user is a teacher
     onValue(userRef, (snapshot) => {
       const userData = snapshot.val();
       if (userData && userData.role === 'teacher') {
@@ -78,8 +62,11 @@ async function handleTeacherLogin() {
         signOut(auth);
         showNotification('Access denied: Not a teacher account', 'error');
       }
+    }, {
+      onlyOnce: true
     });
   } catch (error) {
+    console.error('Login error:', error);
     showNotification(`Login failed: ${error.message}`, 'error');
   }
 }
@@ -105,57 +92,97 @@ async function handleStudentLogin() {
         signOut(auth);
         showNotification('Access denied: Not a student account', 'error');
       }
+    }, {
+      onlyOnce: true
     });
   } catch (error) {
+    console.error('Login error:', error);
     showNotification(`Login failed: ${error.message}`, 'error');
   }
 }
 
-// Registration handlers
+// Updated registration handlers with better error handling
 async function registerTeacher() {
-  const email = document.getElementById('new-teacher-email').value;
-  const password = document.getElementById('new-teacher-password').value;
-  const confirmPassword = document.getElementById('new-teacher-password-confirm').value;
-
-  if (password !== confirmPassword) {
-    showNotification('Passwords do not match', 'error');
-    return;
-  }
-
   try {
+    const email = document.getElementById('new-teacher-email').value;
+    const password = document.getElementById('new-teacher-password').value;
+    const confirmPassword = document.getElementById('new-teacher-password-confirm').value;
+
+    if (!email || !password) {
+      showNotification('Please fill in all fields', 'error');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showNotification('Passwords do not match', 'error');
+      return;
+    }
+
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await set(ref(database, `users/${userCredential.user.uid}`), {
-      email,
-      role: 'teacher',
-      createdAt: Date.now()
-    });
-    showNotification('Teacher registration successful!');
-  } catch (error) {
-    showNotification(`Registration failed: ${error.message}`, 'error');
+    const userId = userCredential.user.uid;
+    
+    try {
+      await set(ref(database, `users/${userId}`), {
+        email,
+        role: 'teacher',
+        createdAt: Date.now()
+      });
+      showNotification('Teacher registration successful!');
+    } catch (dbError) {
+      console.error('Database write error:', dbError);
+      showNotification('Account created but profile setup failed. Please contact support.', 'error');
+    }
+  } catch (authError) {
+    console.error('Authentication error:', authError);
+    showNotification(`Registration failed: ${authError.message}`, 'error');
   }
 }
 
 async function registerStudent() {
-  const email = document.getElementById('new-student-email').value;
-  const password = document.getElementById('new-student-password').value;
-  const confirmPassword = document.getElementById('new-student-password-confirm').value;
-
-  if (password !== confirmPassword) {
-    showNotification('Passwords do not match', 'error');
-    return;
-  }
-
   try {
+    const email = document.getElementById('new-student-email').value;
+    const password = document.getElementById('new-student-password').value;
+    const confirmPassword = document.getElementById('new-student-password-confirm').value;
+
+    if (!email || !password) {
+      showNotification('Please fill in all fields', 'error');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showNotification('Passwords do not match', 'error');
+      return;
+    }
+
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await set(ref(database, `users/${userCredential.user.uid}`), {
-      email,
-      role: 'student',
-      createdAt: Date.now()
-    });
-    showNotification('Student registration successful!');
-  } catch (error) {
-    showNotification(`Registration failed: ${error.message}`, 'error');
+    const userId = userCredential.user.uid;
+    
+    try {
+      await set(ref(database, `users/${userId}`), {
+        email,
+        role: 'student',
+        createdAt: Date.now()
+      });
+      showNotification('Student registration successful!');
+    } catch (dbError) {
+      console.error('Database write error:', dbError);
+      showNotification('Account created but profile setup failed. Please contact support.', 'error');
+    }
+  } catch (authError) {
+    console.error('Authentication error:', authError);
+    showNotification(`Registration failed: ${authError.message}`, 'error');
   }
+}
+
+// Toggle form visibility functions
+function showTeacherRegistration() {
+  document.getElementById('teacher-register-form').classList.remove('hidden');
+  document.getElementById('student-register-form').classList.add('hidden');
+}
+
+function showStudentRegistration() {
+  document.getElementById('student-register-form').classList.remove('hidden');
+  document.getElementById('teacher-register-form').classList.add('hidden');
 }
 
 // Class management
@@ -173,6 +200,7 @@ async function joinClass(classCode, userId) {
     });
     showNotification('Successfully joined class!');
   } catch (error) {
+    console.error('Join class error:', error);
     showNotification(`Failed to join class: ${error.message}`, 'error');
   }
 }
@@ -181,8 +209,8 @@ async function logoutUser() {
   try {
     await signOut(auth);
     showNotification('Logged out successfully');
-    // Add your logout redirect logic here
   } catch (error) {
+    console.error('Logout error:', error);
     showNotification(`Logout failed: ${error.message}`, 'error');
   }
 }
@@ -191,14 +219,12 @@ async function logoutUser() {
 onAuthStateChanged(auth, (user) => {
   if (user) {
     console.log('User logged in:', user.email);
-    // Add your post-login UI update logic here
   } else {
     console.log('No user logged in');
-    // Add your post-logout UI update logic here
   }
 });
 
-// Export functions to window object for HTML access
+// Export functions to window object
 window.handleTeacherLogin = handleTeacherLogin;
 window.handleStudentLogin = handleStudentLogin;
 window.registerTeacher = registerTeacher;
