@@ -116,6 +116,17 @@ function showStudentRegistration() {
         studentRegForm.classList.remove('hidden');
     }
 }
+// Notification
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('notification');
+    if (notification) {
+        notification.textContent = message;
+        notification.className = `notification show ${type}`;
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+}
 
 // Authentication Functions
 
