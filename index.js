@@ -16,6 +16,15 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
+// Wait for DOM content to be loaded before adding event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize UI elements
+    initializeUI();
+
+    // Set up auth state listener
+    auth.onAuthStateChanged(handleAuthStateChange);
+});
+
 // Application state
 const appData = {
     classes: {},
@@ -27,192 +36,166 @@ const appData = {
     theme: 'dark'
 };
 
-function handleTeacherLogin() {
-    const email = document.getElementById('teacher-email').value;
-    const password = document.getElementById('teacher-password').value;
-    if (!email || !password) {
-        showNotification('Please fill in all fields', 'error');
-        return;
+// UI Initialization
+function initializeUI() {
+    // Add event listeners for registration buttons
+    const teacherRegBtn = document.querySelector('button[onclick="showTeacherRegistration()"]');
+    if (teacherRegBtn) {
+        teacherRegBtn.addEventListener('click', showTeacherRegistration);
     }
-    loginUser(email, password, 'teacher');
+
+    const studentRegBtn = document.querySelector('button[onclick="showStudentRegistration()"]');
+    if (studentRegBtn) {
+        studentRegBtn.addEventListener('click', showStudentRegistration);
+    }
+
+    // Add event listeners for login buttons
+    const teacherLoginBtn = document.querySelector('button[onclick="handleTeacherLogin()"]');
+    if (teacherLoginBtn) {
+        teacherLoginBtn.addEventListener('click', handleTeacherLogin);
+    }
+
+    const studentLoginBtn = document.querySelector('button[onclick="handleStudentLogin()"]');
+    if (studentLoginBtn) {
+        studentLoginBtn.addEventListener('click', handleStudentLogin);
+    }
 }
 
-function handleStudentLogin() {
-    const email = document.getElementById('student-email').value;
-    const password = document.getElementById('student-password').value;
-    const classCode = document.getElementById('class-code').value;
-    if (!email || !password) {
-        showNotification('Please fill in all fields', 'error');
-        return;
+// Authentication state handler
+function handleAuthStateChange(user) {
+    if (user) {
+        db.ref(`users/${user.uid}`).once('value').then((snapshot) => {
+            const userData = snapshot.val();
+            appData.currentUser = {
+                uid: user.uid,
+                email: user.email,
+                role: userData.role
+            };
+            updateUIForRole(userData.role);
+        });
+    } else {
+        appData.currentUser = null;
+        showLoginForm();
     }
-    loginUser(email, password, 'student', classCode);
 }
 
-
-
-// UI Helper Functions
-function showNotification(message, type = 'success') {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.className = `notification show ${type}`;
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 3000);
+// UI State Functions
+function showLoginForm() {
+    const loginSections = document.getElementById('login-sections');
+    if (loginSections) {
+        loginSections.classList.remove('hidden');
+    }
+    
+    const teacherRegForm = document.getElementById('teacher-register-form');
+    if (teacherRegForm) {
+        teacherRegForm.classList.add('hidden');
+    }
+    
+    const studentRegForm = document.getElementById('student-register-form');
+    if (studentRegForm) {
+        studentRegForm.classList.add('hidden');
+    }
 }
 
 function showTeacherRegistration() {
-    document.getElementById('login-sections').classList.add('hidden');
-    document.getElementById('teacher-register-form').classList.remove('hidden');
+    const loginSections = document.getElementById('login-sections');
+    const teacherRegForm = document.getElementById('teacher-register-form');
+    
+    if (loginSections && teacherRegForm) {
+        loginSections.classList.add('hidden');
+        teacherRegForm.classList.remove('hidden');
+    }
 }
 
 function showStudentRegistration() {
-    document.getElementById('login-sections').classList.add('hidden');
-    document.getElementById('student-register-form').classList.remove('hidden');
+    const loginSections = document.getElementById('login-sections');
+    const studentRegForm = document.getElementById('student-register-form');
+    
+    if (loginSections && studentRegForm) {
+        loginSections.classList.add('hidden');
+        studentRegForm.classList.remove('hidden');
+    }
 }
 
 // Authentication Functions
-async function registerTeacher() {
-    const email = document.getElementById('new-teacher-email').value;
-    const password = document.getElementById('new-teacher-password').value;
-    const confirmPassword = document.getElementById('new-teacher-password-confirm').value;
+async function handleTeacherLogin() {
+    const email = document.getElementById('teacher-email')?.value;
+    const password = document.getElementById('teacher-password')?.value;
     
-    if (password !== confirmPassword) {
-        showNotification('Passwords do not match', 'error');
+    if (!email || !password) {
+        showNotification('Please fill in all fields', 'error');
         return;
     }
-    
-    try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        await db.ref(`users/${user.uid}`).set({
-            email: email,
-            role: 'teacher',
-            createdAt: new Date().toISOString()
-        });
-
-        showNotification('Teacher registration successful');
-        document.getElementById('teacher-register-form').classList.add('hidden');
-        document.getElementById('login-sections').classList.remove('hidden');
-        return user;
-    } catch (error) {
-        showNotification(error.message, 'error');
-        throw error;
-    }
+    await loginUser(email, password, 'teacher');
 }
 
-async function registerStudent() {
-    const email = document.getElementById('new-student-email').value;
-    const password = document.getElementById('new-student-password').value;
-    const confirmPassword = document.getElementById('new-student-password-confirm').value;
+async function handleStudentLogin() {
+    const email = document.getElementById('student-email')?.value;
+    const password = document.getElementById('student-password')?.value;
+    const classCode = document.getElementById('class-code')?.value;
     
-    if (password !== confirmPassword) {
-        showNotification('Passwords do not match', 'error');
+    if (!email || !password) {
+        showNotification('Please fill in all fields', 'error');
         return;
     }
-    
-    try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        await db.ref(`users/${user.uid}`).set({
-            email: email,
-            role: 'student',
-            createdAt: new Date().toISOString()
-        });
-
-        showNotification('Student registration successful');
-        document.getElementById('student-register-form').classList.add('hidden');
-        document.getElementById('login-sections').classList.remove('hidden');
-        return user;
-    } catch (error) {
-        showNotification(error.message, 'error');
-        throw error;
-    }
+    await loginUser(email, password, 'student', classCode);
 }
 
-// Add the missing functions
-async function joinClass(classCode) {
-    if (!appData.currentUser) {
-        showNotification('Please login first', 'error');
-        return;
-    }
-
+async function loginUser(email, password, role, classCode = null) {
     try {
-        const classRef = await db.ref(`classes/${classCode}`).get();
-        if (!classRef.exists()) {
-            showNotification('Invalid class code', 'error');
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        const userSnapshot = await db.ref(`users/${user.uid}`).get();
+        const userData = userSnapshot.val();
+        
+        if (!userData || userData.role !== role) {
+            showNotification(`Invalid ${role} credentials`, 'error');
+            await auth.signOut();
             return;
         }
 
-        await db.ref(`classes/${classCode}/students/${appData.currentUser.uid}`).set({
-            email: appData.currentUser.email,
-            joinedAt: new Date().toISOString()
-        });
-
-        showNotification('Successfully joined class');
-        appData.currentClassCode = classCode;
-        updateDashboard();
+        updateUIForRole(role);
+        if (role === 'student' && classCode) {
+            await joinClass(classCode);
+        }
+        
+        showNotification('Login successful');
     } catch (error) {
         showNotification(error.message, 'error');
     }
 }
 
-async function uploadResource() {
-    if (!appData.currentUser || !appData.currentClassCode) {
-        showNotification('Please create or join a class first', 'error');
-        return;
-    }
-
-    const fileInput = document.getElementById('file-upload');
-    const category = document.getElementById('resource-category').value;
-    const deadline = document.getElementById('deadline').value;
-
-    if (!fileInput.files[0]) {
-        showNotification('Please select a file', 'error');
-        return;
-    }
-
-    // For now, just store the file name since we haven't set up Firebase Storage
-    try {
-        const resourceRef = db.ref(`classes/${appData.currentClassCode}/resources`).push();
-        await resourceRef.set({
-            name: fileInput.files[0].name,
-            category: category,
-            deadline: deadline || null,
-            uploadedBy: appData.currentUser.email,
-            uploadedAt: new Date().toISOString()
-        });
-
-        showNotification('Resource uploaded successfully');
-        updateDashboard();
-    } catch (error) {
-        showNotification(error.message, 'error');
+function updateUIForRole(role) {
+    const loginSections = document.getElementById('login-sections');
+    const roomCreation = document.getElementById('room-creation');
+    const classroomSection = document.getElementById('classroom-section');
+    
+    if (loginSections) loginSections.classList.add('hidden');
+    
+    if (role === 'teacher') {
+        if (roomCreation) roomCreation.classList.remove('hidden');
+        const teacherName = document.getElementById('teacher-name');
+        if (teacherName) teacherName.textContent = appData.currentUser.email;
+    } else if (role === 'student' && classroomSection) {
+        classroomSection.classList.remove('hidden');
     }
 }
 
-async function downloadResource(resourceId) {
-    // Implement when Firebase Storage is set up
-    showNotification('Download functionality coming soon');
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('notification');
+    if (notification) {
+        notification.textContent = message;
+        notification.className = `notification show ${type}`;
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
 }
 
-// Make functions available globally
+// Export functions to global scope
 window.handleTeacherLogin = handleTeacherLogin;
 window.handleStudentLogin = handleStudentLogin;
 window.showTeacherRegistration = showTeacherRegistration;
 window.showStudentRegistration = showStudentRegistration;
-window.registerTeacher = registerTeacher;
-window.registerStudent = registerStudent;
 window.loginUser = loginUser;
-window.logoutUser = logoutUser;
-window.createNewClass = createNewClass;
-window.joinClass = joinClass;
-window.uploadResource = uploadResource;
-window.downloadResource = downloadResource;
-
-// Your existing initialization code...
-window.addEventListener('load', () => {
-    auth.onAuthStateChanged(async (user) => {
-        // Your existing onAuthStateChanged logic...
-    });
-});
