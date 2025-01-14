@@ -1,7 +1,19 @@
-// Import the required Firebase modules
+// Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+import { 
+  getDatabase, 
+  ref, 
+  set, 
+  push, 
+  onValue 
+} from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -20,8 +32,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app);
 
-console.log("Firebase initialized successfully!");
-
 // Utility functions
 function showNotification(message, type = 'success') {
   const notification = document.getElementById('notification');
@@ -34,117 +44,165 @@ function showNotification(message, type = 'success') {
   }
 }
 
+// Toggle visibility functions
+function toggleForm(formToShow, formToHide) {
+  document.getElementById(formToShow).classList.remove('hidden');
+  document.getElementById(formToHide).classList.add('hidden');
+}
+
+// Registration form display functions
+function showTeacherRegistration() {
+  toggleForm('teacher-register-form', 'student-register-form');
+}
+
+function showStudentRegistration() {
+  toggleForm('student-register-form', 'teacher-register-form');
+}
+
 // Authentication handlers
 async function handleTeacherLogin() {
-  const email = document.getElementById("teacher-email").value;
-  const password = document.getElementById("teacher-password").value;
+  const email = document.getElementById('teacher-email').value;
+  const password = document.getElementById('teacher-password').value;
+  
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Teacher logged in:", userCredential.user);
-    showNotification("Login successful!");
+    const userRef = ref(database, `users/${userCredential.user.uid}`);
+    
+    // Verify if user is a teacher
+    onValue(userRef, (snapshot) => {
+      const userData = snapshot.val();
+      if (userData && userData.role === 'teacher') {
+        showNotification('Teacher login successful!');
+        // Add your teacher dashboard redirect logic here
+      } else {
+        signOut(auth);
+        showNotification('Access denied: Not a teacher account', 'error');
+      }
+    });
   } catch (error) {
-    console.error("Error during login:", error.message);
-    showNotification("Login failed: " + error.message, "error");
+    showNotification(`Login failed: ${error.message}`, 'error');
   }
 }
 
 async function handleStudentLogin() {
-  const email = document.getElementById("student-email").value;
-  const password = document.getElementById("student-password").value;
-  const classCode = document.getElementById("class-code").value;
+  const email = document.getElementById('student-email').value;
+  const password = document.getElementById('student-password').value;
+  const classCode = document.getElementById('class-code').value;
+  
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Student logged in:", userCredential.user);
-    if (classCode) {
-      await joinClass(classCode);
-    }
-    showNotification("Login successful!");
+    const userRef = ref(database, `users/${userCredential.user.uid}`);
+    
+    onValue(userRef, async (snapshot) => {
+      const userData = snapshot.val();
+      if (userData && userData.role === 'student') {
+        if (classCode) {
+          await joinClass(classCode, userCredential.user.uid);
+        }
+        showNotification('Student login successful!');
+        // Add your student dashboard redirect logic here
+      } else {
+        signOut(auth);
+        showNotification('Access denied: Not a student account', 'error');
+      }
+    });
   } catch (error) {
-    console.error("Error during login:", error.message);
-    showNotification("Login failed: " + error.message, "error");
+    showNotification(`Login failed: ${error.message}`, 'error');
   }
 }
 
-async function registerTeacher(email, password) {
+// Registration handlers
+async function registerTeacher() {
+  const email = document.getElementById('new-teacher-email').value;
+  const password = document.getElementById('new-teacher-password').value;
+  const confirmPassword = document.getElementById('new-teacher-password-confirm').value;
+
+  if (password !== confirmPassword) {
+    showNotification('Passwords do not match', 'error');
+    return;
+  }
+
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const userId = userCredential.user.uid;
-    await set(ref(database, `users/${userId}`), {
+    await set(ref(database, `users/${userCredential.user.uid}`), {
       email,
-      role: "teacher",
+      role: 'teacher',
       createdAt: Date.now()
     });
-    showNotification("Teacher registration successful!");
+    showNotification('Teacher registration successful!');
   } catch (error) {
-    console.error("Error during teacher registration:", error.message);
-    showNotification("Registration failed: " + error.message, "error");
+    showNotification(`Registration failed: ${error.message}`, 'error');
   }
 }
 
-async function registerStudent(email, password) {
+async function registerStudent() {
+  const email = document.getElementById('new-student-email').value;
+  const password = document.getElementById('new-student-password').value;
+  const confirmPassword = document.getElementById('new-student-password-confirm').value;
+
+  if (password !== confirmPassword) {
+    showNotification('Passwords do not match', 'error');
+    return;
+  }
+
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const userId = userCredential.user.uid;
-    await set(ref(database, `users/${userId}`), {
+    await set(ref(database, `users/${userCredential.user.uid}`), {
       email,
-      role: "student",
+      role: 'student',
       createdAt: Date.now()
     });
-    showNotification("Student registration successful!");
+    showNotification('Student registration successful!');
   } catch (error) {
-    console.error("Error during student registration:", error.message);
-    showNotification("Registration failed: " + error.message, "error");
+    showNotification(`Registration failed: ${error.message}`, 'error');
+  }
+}
+
+// Class management
+async function joinClass(classCode, userId) {
+  if (!classCode || !userId) {
+    showNotification('Invalid class code or user ID', 'error');
+    return;
+  }
+
+  try {
+    const classRef = ref(database, `classes/${classCode}/students`);
+    await push(classRef, {
+      userId,
+      joinedAt: Date.now()
+    });
+    showNotification('Successfully joined class!');
+  } catch (error) {
+    showNotification(`Failed to join class: ${error.message}`, 'error');
   }
 }
 
 async function logoutUser() {
   try {
     await signOut(auth);
-    showNotification("Logout successful!");
+    showNotification('Logged out successfully');
+    // Add your logout redirect logic here
   } catch (error) {
-    console.error("Error during logout:", error.message);
-    showNotification("Logout failed: " + error.message, "error");
+    showNotification(`Logout failed: ${error.message}`, 'error');
   }
 }
 
-async function joinClass(classCode) {
-  try {
-    const classRef = ref(database, `classes/${classCode}`);
-    const snapshot = await push(classRef, {
-      userId: auth.currentUser.uid,
-      joinedAt: Date.now()
-    });
-    console.log("Joined class successfully:", snapshot.key);
-    showNotification("Joined class successfully!");
-  } catch (error) {
-    console.error("Error joining class:", error.message);
-    showNotification("Failed to join class: " + error.message, "error");
-  }
-}
-
-function showTeacherRegistration() {
-  document.getElementById("teacher-register-form").classList.remove("hidden");
-  document.getElementById("student-register-form").classList.add("hidden");
-}
-
-function showStudentRegistration() {
-  document.getElementById("student-register-form").classList.remove("hidden");
-  document.getElementById("teacher-register-form").classList.add("hidden");
-}
-
+// Auth state observer
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    console.log("User logged in:", user.email);
+    console.log('User logged in:', user.email);
+    // Add your post-login UI update logic here
   } else {
-    console.log("No user is logged in.");
+    console.log('No user logged in');
+    // Add your post-logout UI update logic here
   }
 });
 
-// Expose functions globally
+// Export functions to window object for HTML access
 window.handleTeacherLogin = handleTeacherLogin;
 window.handleStudentLogin = handleStudentLogin;
 window.registerTeacher = registerTeacher;
 window.registerStudent = registerStudent;
-window.logoutUser = logoutUser;
 window.showTeacherRegistration = showTeacherRegistration;
 window.showStudentRegistration = showStudentRegistration;
+window.logoutUser = logoutUser;
