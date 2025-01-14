@@ -169,4 +169,12 @@ input, .btn {
     padding: 20px;
 }
 
-
+/* Styles for the portal cards to be side by side when screen width is greater than 522px */
+@media (min-width: 522px) {
+  #teacher-auth, #student-auth {
+    display: inline-block;
+    width: 45%;
+    margin: 0 2.5%;
+    vertical-align: top;
+  }
+}
