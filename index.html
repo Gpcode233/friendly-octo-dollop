@@ -5,12 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual Classroom Portal</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Firebase scripts first -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <!-- Your script last with defer -->
-    <script src="index.js" defer></script>
 </head>
 <body class="dark">
     <!-- ... rest of your existing body content ... -->
@@ -66,6 +60,34 @@
 <div class="header-actions">
     <button class="btn" onclick="logoutUser()">Logout</button>
 </div>
-    
+
+
+     <!-- Firebase Modular SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+    import { getDatabase } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA2uGeI_th2X_ir09-DTc1UdutM8jD8PcM",
+      authDomain: "veet-84209.firebaseapp.com",
+      databaseURL: "https://veet-84209-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "veet-84209",
+      storageBucket: "veet-84209.appspot.com",
+      messagingSenderId: "31166385876",
+      appId: "1:31166385876:web:2af1531652e2e0669af541",
+      measurementId: "G-T7E9KHT1L2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    console.log("Firebase initialized successfully!");
+  </script>
+
+  <!-- Your script that uses Firebase -->
+  <script src="index.js" defer></script>
+
 </body>
 </html>
