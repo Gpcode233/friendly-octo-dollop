@@ -46,31 +46,32 @@ function showNotification(message, type = 'success') {
 
 // Authentication handlers
 async function handleTeacherLogin() {
-  const email = document.getElementById('teacher-email').value;
-  const password = document.getElementById('teacher-password').value;
-  
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const userRef = ref(database, `users/${userCredential.user.uid}`);
+    const email = document.getElementById('teacher-email').value;
+    const password = document.getElementById('teacher-password').value;
     
-    onValue(userRef, (snapshot) => {
-      const userData = snapshot.val();
-      if (userData && userData.role === 'teacher') {
-        showNotification('Teacher login successful!');
-        // Redirect to the teacher dashboard page
-        window.location.href = 'teacher-dashboard.html'; // Update this to the actual page URL
-      } else {
-        signOut(auth);
-        showNotification('Access denied: Not a teacher account', 'error');
-      }
-    }, {
-      onlyOnce: true
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    showNotification(`Login failed: ${error.message}`, 'error');
-  }
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const userRef = ref(database, `users/${userCredential.user.uid}`);
+        
+        onValue(userRef, (snapshot) => {
+            const userData = snapshot.val();
+            if (userData && userData.role === 'teacher') {
+                showNotification('Teacher login successful!');
+                showTeacherDashboard();
+                loadTeacherClasses();
+            } else {
+                signOut(auth);
+                showNotification('Access denied: Not a teacher account', 'error');
+            }
+        }, {
+            onlyOnce: true
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        showNotification(`Login failed: ${error.message}`, 'error');
+    }
 }
+
 
 async function handleStudentLogin() {
   const email = document.getElementById('student-email').value;
@@ -230,24 +231,149 @@ async function setUserRole(email, role) {
   }
 }
 
+// Add these new functions for dashboard management
+function showTeacherDashboard() {
+    document.getElementById('auth-section').classList.add('hidden');
+    document.getElementById('teacher-dashboard').classList.remove('hidden');
+    document.getElementById('student-dashboard').classList.add('hidden');
+}
+
+function showStudentDashboard() {
+    document.getElementById('auth-section').classList.add('hidden');
+    document.getElementById('teacher-dashboard').classList.add('hidden');
+    document.getElementById('student-dashboard').classList.remove('hidden');
+}
+
+function showAuthSection() {
+    document.getElementById('auth-section').classList.remove('hidden');
+    document.getElementById('teacher-dashboard').classList.add('hidden');
+    document.getElementById('student-dashboard').classList.add('hidden');
+}
+
+// Generate a random 6-character class code
+function generateClassCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+// Create a new class
+async function createClass() {
+    const user = auth.currentUser;
+    if (!user) {
+        showNotification('Please log in first', 'error');
+        return;
+    }
+
+    const className = document.getElementById('class-name').value;
+    const subject = document.getElementById('subject').value;
+
+    if (!className || !subject) {
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+
+    try {
+        const classCode = generateClassCode();
+        const classData = {
+            name: className,
+            subject: subject,
+            teacherId: user.uid,
+            teacherEmail: user.email,
+            createdAt: Date.now(),
+            classCode: classCode
+        };
+
+        // Save class data
+        await set(ref(database, `classes/${classCode}`), classData);
+        
+        // Add class reference to teacher's classes
+        const teacherClassRef = ref(database, `users/${user.uid}/classes/${classCode}`);
+        await set(teacherClassRef, true);
+
+        showNotification('Class created successfully!');
+        document.getElementById('class-name').value = '';
+        document.getElementById('subject').value = '';
+        
+        loadTeacherClasses();
+    } catch (error) {
+        console.error('Error creating class:', error);
+        showNotification(`Failed to create class: ${error.message}`, 'error');
+    }
+}
+
+// Load teacher's classes
+async function loadTeacherClasses() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const classesList = document.getElementById('classes-list');
+    classesList.innerHTML = '';
+
+    const teacherClassesRef = ref(database, `users/${user.uid}/classes`);
+    
+    onValue(teacherClassesRef, async (snapshot) => {
+        const classesData = snapshot.val();
+        
+        if (!classesData) {
+            classesList.innerHTML = '<p>No classes created yet</p>';
+            return;
+        }
+
+        for (const classCode of Object.keys(classesData)) {
+            const classRef = ref(database, `classes/${classCode}`);
+            onValue(classRef, (classSnapshot) => {
+                const classData = classSnapshot.val();
+                if (classData) {
+                    const classElement = document.createElement('div');
+                    classElement.className = 'class-card';
+                    classElement.innerHTML = `
+                        <h3>${classData.name}</h3>
+                        <p>Subject: ${classData.subject}</p>
+                        <p>Class Code: <span class="class-code">${classData.classCode}</span></p>
+                        <button class="btn" onclick="viewClass('${classData.classCode}')">View Class</button>
+                    `;
+                    classesList.appendChild(classElement);
+                }
+            }, { onlyOnce: true });
+        }
+    });
+}
 
 async function logoutUser() {
-  try {
-    await signOut(auth);
-    showNotification('Logged out successfully');
-  } catch (error) {
-    console.error('Logout error:', error);
-    showNotification(`Logout failed: ${error.message}`, 'error');
-  }
+    try {
+        await signOut(auth);
+        showAuthSection();
+        showNotification('Logged out successfully');
+    } catch (error) {
+        console.error('Logout error:', error);
+        showNotification(`Logout failed: ${error.message}`, 'error');
+    }
 }
+
 
 // Auth state observer
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    console.log('User logged in:', user.email);
-  } else {
-    console.log('No user logged in');
-  }
+    if (user) {
+        const userRef = ref(database, `users/${user.uid}`);
+        onValue(userRef, (snapshot) => {
+            const userData = snapshot.val();
+            if (userData) {
+                if (userData.role === 'teacher') {
+                    showTeacherDashboard();
+                    loadTeacherClasses();
+                } else if (userData.role === 'student') {
+                    showStudentDashboard();
+                    // Load student classes (implement this function)
+                }
+            }
+        });
+    } else {
+        showAuthSection();
+    }
 });
 
 // Export functions to window object
@@ -259,4 +385,5 @@ window.showTeacherRegistration = showTeacherRegistration;
 window.showStudentRegistration = showStudentRegistration;
 // Add this to your window exports
 window.setUserRole = setUserRole;
+window.createClass = createClass;
 window.logoutUser = logoutUser;
