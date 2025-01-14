@@ -169,12 +169,42 @@ input, .btn {
     padding: 20px;
 }
 
-/* Styles for the portal cards to be side by side when screen width is greater than 522px */
+/* Add styles for auth sections */
+#teacher-auth, #student-auth {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Centralize the portal cards */
 @media (min-width: 522px) {
-  #teacher-auth, #student-auth {
-    display: inline-block;
-    width: 45%;
-    margin: 0 2.5%;
-    vertical-align: top;
-  }
+    #teacher-auth, #student-auth {
+        display: inline-block;
+        width: 45%;
+        margin: 0 2.5%;
+        vertical-align: top;
+    }
+}
+
+/* Reduce logout button size on smaller screens */
+@media (max-width: 522px) {
+    .header-actions {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+    .header-actions .btn {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .header-actions .btn::before {
+        content: '\f011'; /* FontAwesome Unicode for power off icon */
+        font-family: 'FontAwesome';
+        font-size: 20px;
+    }
 }
