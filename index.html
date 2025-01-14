@@ -4,96 +4,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual Classroom Portal</title>
-    <head>
-  <link rel="icon" href="nfav.png" type="image/png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <title>Your Website Title</title>
-</head>
-
+    <link rel="icon" href="nfav.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="dark">
-    <!-- ... rest of your existing body content ... -->
-        <div id="notification" class="notification"></div>
+    <div id="notification" class="notification"></div>
+    
+    <!-- Authentication Section -->
+    <div id="auth-section">
         <h1>VEET Classroom</h1>
 
-    <!-- Teacher section -->
-<section id="teacher-auth" class="glass">
-    <h2>Teacher Portal</h2>
-    <div id="teacher-login-form">
-        <input type="email" id="teacher-email" placeholder="Email">
-        <input type="password" id="teacher-password" placeholder="Password">
-        <button class="btn" type="button" onclick="handleTeacherLogin()">Login as Teacher</button>
+        <!-- Teacher section -->
+        <section id="teacher-auth" class="glass">
+            <h2>Teacher Portal</h2>
+            <div id="teacher-login-form">
+                <input type="email" id="teacher-email" placeholder="Email">
+                <input type="password" id="teacher-password" placeholder="Password">
+                <button class="btn" type="button" onclick="handleTeacherLogin()">Login as Teacher</button>
+            </div>
+            <p>New teacher? <button class="btn" type="button" onclick="showTeacherRegistration()">Register</button></p>
+        </section>
+
+        <!-- Student section -->
+        <section id="student-auth" class="glass">
+            <h2>Student Portal</h2>
+            <div id="student-login-form">
+                <input type="email" id="student-email" placeholder="Email">
+                <input type="password" id="student-password" placeholder="Password">
+                <input type="text" id="class-code" placeholder="Class Code">
+                <button class="btn" type="button" onclick="handleStudentLogin()">Login as Student</button>
+            </div>
+            <p>New student? <button class="btn" type="button" onclick="showStudentRegistration()">Register</button></p>
+        </section>
+
+        <!-- Registration forms -->
+        <div id="teacher-register-form" class="hidden">
+            <input type="email" id="new-teacher-email" placeholder="Email">
+            <input type="password" id="new-teacher-password" placeholder="Password">
+            <input type="password" id="new-teacher-password-confirm" placeholder="Confirm Password">
+            <button class="btn" onclick="registerTeacher()">Register</button>
+        </div>
+
+        <div id="student-register-form" class="hidden">
+            <input type="email" id="new-student-email" placeholder="Email">
+            <input type="password" id="new-student-password" placeholder="Password">
+            <input type="password" id="new-student-password-confirm" placeholder="Confirm Password">
+            <button class="btn" onclick="registerStudent()">Register</button>
+        </div>
     </div>
-    <p>New teacher? <button class="btn" type="button" onclick="showTeacherRegistration()">Register</button></p>
-</section>
 
-<!-- Student section -->
-<section id="student-auth" class="glass">
-    <h2>Student Portal</h2>
-    <div id="student-login-form">
-        <input type="email" id="student-email" placeholder="Email">
-        <input type="password" id="student-password" placeholder="Password">
-        <input type="text" id="class-code" placeholder="Class Code">
-        <button class="btn" type="button" onclick="handleStudentLogin()">Login as Student</button>
+    <!-- Teacher Dashboard Section (hidden by default) -->
+    <div id="teacher-dashboard" class="dashboard hidden">
+        <div class="header-actions">
+            <button class="btn" onclick="logoutUser()">Logout</button>
+        </div>
+        <h1>Teacher Dashboard</h1>
+        
+        <section class="glass create-class-section">
+            <h2>Create New Class</h2>
+            <div class="create-class-form">
+                <input type="text" id="class-name" placeholder="Class Name">
+                <input type="text" id="subject" placeholder="Subject">
+                <button class="btn" onclick="createClass()">Create Class</button>
+            </div>
+        </section>
+
+        <section class="glass classes-section">
+            <h2>Your Classes</h2>
+            <div id="classes-list" class="classes-grid">
+                <!-- Classes will be populated here dynamically -->
+            </div>
+        </section>
     </div>
-    <p>New student? <button class="btn" type="button" onclick="showStudentRegistration()">Register</button></p>
-</section>
-    <!-- ... rest of your existing HTML ... -->
-    
-<!-- Registration forms (hidden by default) -->
-<div id="teacher-register-form" class="hidden">
-    <input type="email" id="new-teacher-email" placeholder="Email">
-    <input type="password" id="new-teacher-password" placeholder="Password">
-    <input type="password" id="new-teacher-password-confirm" placeholder="Confirm Password">
-    <button class="btn" onclick="registerTeacher(
-        document.getElementById('new-teacher-email').value,
-        document.getElementById('new-teacher-password').value
-    )">Register</button>
-</div>
 
-<div id="student-register-form" class="hidden">
-    <input type="email" id="new-student-email" placeholder="Email">
-    <input type="password" id="new-student-password" placeholder="Password">
-    <input type="password" id="new-student-password-confirm" placeholder="Confirm Password">
-    <button class="btn" onclick="registerStudent(
-        document.getElementById('new-student-email').value,
-        document.getElementById('new-student-password').value
-    )">Register</button>
-</div>
+    <!-- Student Dashboard Section (hidden by default) -->
+    <div id="student-dashboard" class="dashboard hidden">
+        <div class="header-actions">
+            <button class="btn" onclick="logoutUser()">Logout</button>
+        </div>
+        <h1>Student Dashboard</h1>
+        
+        <section class="glass enrolled-classes-section">
+            <h2>Your Classes</h2>
+            <div id="student-classes-list" class="classes-grid">
+                <!-- Enrolled classes will be populated here dynamically -->
+            </div>
+        </section>
+    </div>
 
-<!-- Add logout button to classroom section -->
-<div class="header-actions">
-    <button class="btn" onclick="logoutUser()">Logout</button>
-</div>
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2uGeI_th2X_ir09-DTc1UdutM8jD8PcM",
+            authDomain: "veet-84209.firebaseapp.com",
+            databaseURL: "https://veet-84209-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "veet-84209",
+            storageBucket: "veet-84209.appspot.com",
+            messagingSenderId: "31166385876",
+            appId: "1:31166385876:web:2af1531652e2e0669af541",
+            measurementId: "G-T7E9KHT1L2"
+        };
 
-     <!-- Firebase Modular SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-    import { getDatabase } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA2uGeI_th2X_ir09-DTc1UdutM8jD8PcM",
-      authDomain: "veet-84209.firebaseapp.com",
-      databaseURL: "https://veet-84209-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "veet-84209",
-      storageBucket: "veet-84209.appspot.com",
-      messagingSenderId: "31166385876",
-      appId: "1:31166385876:web:2af1531652e2e0669af541",
-      measurementId: "G-T7E9KHT1L2"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const database = getDatabase(app);
-
-    console.log("Firebase initialized successfully!");
-  </script>
-
-  <!-- Your script that uses Firebase -->
-  <script type="module" src="index.js"></script>
-
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+    </script>
+    <script type="module" src="index.js"></script>
 </body>
 </html>
