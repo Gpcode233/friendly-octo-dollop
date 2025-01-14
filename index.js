@@ -205,6 +205,31 @@ async function joinClass(classCode, userId) {
   }
 }
 
+async function setUserRole(email, role) {
+  try {
+    // Get the current user
+    const user = auth.currentUser;
+    if (!user) {
+      const userCredential = await signInWithEmailAndPassword(auth, email, prompt("Enter your password"));
+      user = userCredential.user;
+    }
+    
+    // Set the role in the database
+    await set(ref(database, `users/${user.uid}`), {
+      email: user.email,
+      role: role,
+      createdAt: Date.now()
+    });
+    
+    console.log("Role set successfully");
+    showNotification("Account role updated successfully!");
+  } catch (error) {
+    console.error("Error setting role:", error);
+    showNotification("Error updating role: " + error.message, "error");
+  }
+}
+
+
 async function logoutUser() {
   try {
     await signOut(auth);
@@ -231,4 +256,6 @@ window.registerTeacher = registerTeacher;
 window.registerStudent = registerStudent;
 window.showTeacherRegistration = showTeacherRegistration;
 window.showStudentRegistration = showStudentRegistration;
+// Add this to your window exports
+window.setUserRole = setUserRole;
 window.logoutUser = logoutUser;
