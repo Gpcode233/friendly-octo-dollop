@@ -178,6 +178,9 @@ body {
 
 /* Adjust the layout for screens with width less than 522px */
 @media (max-width: 522px) {
+    body {
+        flex-direction: column;
+    }
     h1 {
         margin-bottom: 20px;
     }
