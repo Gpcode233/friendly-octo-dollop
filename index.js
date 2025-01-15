@@ -15,6 +15,7 @@ import {
     onValue,
     get 
 } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -32,6 +33,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app);
+const storage = getStorage(app);
 
 // Utility functions
 function showNotification(message, type = 'success') {
@@ -406,12 +408,18 @@ async function loadTeacherClasses() {
 async function handleViewClass(classCode) {
     const classRef = ref(database, `classes/${classCode}`);
     const studentsRef = ref(database, `classes/${classCode}/students`);
+    const assignmentsRef = ref(database, `classes/${classCode}/assignments`);
     
     try {
-        const classSnapshot = await get(classRef);
-        const studentsSnapshot = await get(studentsRef);
+        const [classSnapshot, studentsSnapshot, assignmentsSnapshot] = await Promise.all([
+            get(classRef),
+            get(studentsRef),
+            get(assignmentsRef)
+        ]);
+
         const classData = classSnapshot.val();
         const studentsData = studentsSnapshot.val();
+        const assignmentsData = assignmentsSnapshot.val();
         const studentCount = studentsData ? Object.keys(studentsData).length : 0;
 
         // Hide the classes list and show the class view
@@ -429,10 +437,17 @@ async function handleViewClass(classCode) {
             <div class="assignments-section">
                 <h3>Assignments</h3>
                 <div class="upload-assignment">
-                    <input type="file" id="assignment-file" accept=".pdf,.doc,.docx">
-                    <button class="btn" onclick="uploadAssignment('${classCode}')">Upload Assignment</button>
+                    <label for="assignment-file" class="file-input-label">
+                        <span class="file-input-text">Choose File</span>
+                        <input type="file" id="assignment-file" accept=".pdf,.doc,.docx,.txt">
+                    </label>
+                    <button class="btn upload-btn" onclick="uploadAssignment('${classCode}')">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
                 </div>
-                <div id="assignments-list"></div>
+                <div id="assignments-list" class="assignments-list">
+                    ${renderAssignments(assignmentsData)}
+                </div>
             </div>
         `;
         
@@ -440,6 +455,89 @@ async function handleViewClass(classCode) {
     } catch (error) {
         console.error('Error viewing class:', error);
         showNotification('Error loading class details', 'error');
+    }
+}
+
+// Add function to render assignments
+function renderAssignments(assignments) {
+    if (!assignments) {
+        return '<p>No assignments uploaded yet</p>';
+    }
+
+    return Object.entries(assignments).map(([id, assignment]) => `
+        <div class="assignment-item">
+            <span class="assignment-name">${assignment.fileName}</span>
+            <div class="assignment-actions">
+                <button class="btn download-btn" onclick="downloadAssignment('${assignment.downloadURL}', '${assignment.fileName}')">
+                    <i class="fas fa-download"></i> Download
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Add upload assignment functionality
+async function uploadAssignment(classCode) {
+    const fileInput = document.getElementById('assignment-file');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showNotification('Please select a file first', 'error');
+        return;
+    }
+
+    try {
+        showNotification('Uploading assignment...', 'success');
+        
+        // Create a storage reference
+        const fileStorageRef = storageRef(storage, `assignments/${classCode}/${file.name}`);
+        
+        // Upload file
+        const snapshot = await uploadBytes(fileStorageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        
+        // Save assignment metadata to database
+        const assignmentRef = ref(database, `classes/${classCode}/assignments`);
+        const newAssignmentRef = push(assignmentRef);
+        
+        await set(newAssignmentRef, {
+            fileName: file.name,
+            downloadURL: downloadURL,
+            uploadedAt: Date.now(),
+            uploadedBy: auth.currentUser.uid
+        });
+
+        showNotification('Assignment uploaded successfully!');
+        
+        // Refresh assignments list
+        const assignmentsSnapshot = await get(assignmentRef);
+        const assignmentsDiv = document.getElementById('assignments-list');
+        assignmentsDiv.innerHTML = renderAssignments(assignmentsSnapshot.val());
+        
+        // Clear file input
+        fileInput.value = '';
+    } catch (error) {
+        console.error('Error uploading assignment:', error);
+        showNotification('Failed to upload assignment: ' + error.message, 'error');
+    }
+}
+
+// Add download assignment functionality
+async function downloadAssignment(downloadURL, fileName) {
+    try {
+        const response = await fetch(downloadURL);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    } catch (error) {
+        console.error('Error downloading assignment:', error);
+        showNotification('Failed to download assignment', 'error');
     }
 }
 
@@ -498,5 +596,7 @@ window.createClass = createClass;
 // Add to window exports
 window.handleViewClass = handleViewClass;
 window.backToClasses = backToClasses;
+// Add to window exports
 window.uploadAssignment = uploadAssignment;
+window.downloadAssignment = downloadAssignment;
 window.logoutUser = logoutUser;
