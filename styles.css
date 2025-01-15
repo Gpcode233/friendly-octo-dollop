@@ -280,3 +280,53 @@ body {
         grid-template-columns: 1fr;
     }
 }
+/* Add these styles to your styles.css */
+
+.class-view {
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.back-button {
+    margin-bottom: 20px;
+}
+
+.assignments-section {
+    margin-top: 20px;
+}
+
+.upload-assignment {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#assignment-file {
+    flex: 1;
+    padding: 8px;
+    background: var(--glass);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: var(--text);
+}
+
+.student-dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.student-classes-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.class-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
