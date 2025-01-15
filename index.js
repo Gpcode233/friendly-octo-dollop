@@ -15,13 +15,6 @@ import {
     onValue,
     get 
 } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
-import { 
-  getDatabase, 
-  ref, 
-  set, 
-  push, 
-  onValue 
-} from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 
 // Firebase configuration
 const firebaseConfig = {
