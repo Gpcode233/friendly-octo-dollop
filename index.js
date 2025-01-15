@@ -437,59 +437,6 @@ async function handleViewClass(classCode) {
             <div class="assignments-section">
                 <h3>Assignments</h3>
                 <div class="upload-assignment">
-                    <label for="assignment-file" class="file-input-label">
-                        <span class="file-input-text">Choose File</span>
-                        <input type="file" id="assignment-file" accept=".pdf,.doc,.docx,.txt">
-                    </label>
-                    <button class="btn upload-btn" onclick="uploadAssignment('${classCode}')">
-                        <i class="fas fa-upload"></i> Upload
-                    </button>
-                </div>
-                <div id="assignments-list" class="assignments-list">
-                    ${renderAssignments(assignmentsData)}
-                </div>
-            </div>
-        `;
-        
-        document.querySelector('.classes-section').appendChild(classView);
-    } catch (error) {
-        console.error('Error viewing class:', error);
-        showNotification('Error loading class details', 'error');
-    }
-}
-
-async function handleViewClass(classCode) {
-    const classRef = ref(database, `classes/${classCode}`);
-    const studentsRef = ref(database, `classes/${classCode}/students`);
-    const assignmentsRef = ref(database, `classes/${classCode}/assignments`);
-    
-    try {
-        const [classSnapshot, studentsSnapshot, assignmentsSnapshot] = await Promise.all([
-            get(classRef),
-            get(studentsRef),
-            get(assignmentsRef)
-        ]);
-
-        const classData = classSnapshot.val();
-        const studentsData = studentsSnapshot.val();
-        const assignmentsData = assignmentsSnapshot.val();
-        const studentCount = studentsData ? Object.keys(studentsData).length : 0;
-
-        // Hide the classes list and show the class view
-        document.getElementById('classes-list').classList.add('hidden');
-        
-        // Create and show class view
-        const classView = document.createElement('div');
-        classView.id = 'class-view';
-        classView.className = 'class-view glass';
-        classView.innerHTML = `
-            <button class="btn back-button" onclick="backToClasses()">← Back to Classes</button>
-            <h2>${classData.name}</h2>
-            <p>Subject: ${classData.subject}</p>
-            <p>Students Enrolled: ${studentCount}</p>
-            <div class="assignments-section">
-                <h3>Assignments</h3>
-                <div class="upload-assignment">
                     <input type="file" 
                            id="assignment-file" 
                            accept=".pdf,.doc,.docx,.txt" 
