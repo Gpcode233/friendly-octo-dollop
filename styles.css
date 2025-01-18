@@ -166,7 +166,17 @@ body {
     align-items: center;
     justify-content: center;
 }
+@media (min-width: 522px) {
+    #auth-section {
+        display: flex;
+        justify-content: space-between;
+    }
 
+    #teacher-auth, #student-auth, h1 {
+        width: 30%;
+        margin: 0 1.5%;
+    }
+}
 /* Styles for the portal cards to be side by side when screen width is greater than 522px */
 @media (min-width: 522px) {
   #teacher-auth, #student-auth {
