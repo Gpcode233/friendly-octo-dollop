@@ -2,7 +2,7 @@
   "name": "veet-classroom",
   "version": "1.0.0",
   "description": "Virtual Classroom Portal",
-  "main": "index.js",
+  "main": "index.html",
   "scripts": {
     "dev": "live-server --port=3000 --open=index.html",
     "start": "live-server --port=3000 --open=index.html"
