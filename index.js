@@ -38,19 +38,52 @@ const storage = getStorage(app);
 // Utility functions
 function showNotification(message, type = 'success') {
   const notification = document.getElementById('notification');
-  if (notification) {
-    notification.textContent = message;
+  const notificationText = notification.querySelector('.notification-text');
+  const notificationIcon = notification.querySelector('.notification-icon');
+  
+  if (notification && notificationText) {
+    notificationText.textContent = message;
     notification.className = `notification show ${type}`;
+    
+    // Update icon based on type
+    if (type === 'success') {
+      notificationIcon.className = 'fas fa-check-circle notification-icon';
+    } else if (type === 'error') {
+      notificationIcon.className = 'fas fa-exclamation-circle notification-icon';
+    } else if (type === 'warning') {
+      notificationIcon.className = 'fas fa-exclamation-triangle notification-icon';
+    } else {
+      notificationIcon.className = 'fas fa-info-circle notification-icon';
+    }
+    
     setTimeout(() => {
       notification.classList.remove('show');
-    }, 3000);
+    }, 4000);
+  }
+}
+
+function showLoading(show = true) {
+  const spinner = document.getElementById('loading-spinner');
+  if (spinner) {
+    if (show) {
+      spinner.classList.remove('hidden');
+    } else {
+      spinner.classList.add('hidden');
+    }
   }
 }
 
 // Authentication handlers
 async function handleTeacherLogin() {
-    const email = document.getElementById('teacher-email').value;
+    const email = document.getElementById('teacher-email').value.trim();
     const password = document.getElementById('teacher-password').value;
+    
+    if (!email || !password) {
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+    
+    showLoading(true);
     
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -59,27 +92,35 @@ async function handleTeacherLogin() {
         onValue(userRef, (snapshot) => {
             const userData = snapshot.val();
             if (userData && userData.role === 'teacher') {
-                showNotification('Teacher login successful!');
+                showNotification('Welcome back, Teacher! 🎓');
                 showTeacherDashboard();
                 loadTeacherClasses();
             } else {
                 signOut(auth);
                 showNotification('Access denied: Not a teacher account', 'error');
             }
+            showLoading(false);
         }, {
             onlyOnce: true
         });
     } catch (error) {
         console.error('Login error:', error);
         showNotification(`Login failed: ${error.message}`, 'error');
+        showLoading(false);
     }
 }
 
-
 async function handleStudentLogin() {
-    const email = document.getElementById('student-email').value;
+    const email = document.getElementById('student-email').value.trim();
     const password = document.getElementById('student-password').value;
-    const classCode = document.getElementById('class-code').value;
+    const classCode = document.getElementById('class-code').value.trim().toUpperCase();
+    
+    if (!email || !password) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    showLoading(true);
     
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -91,32 +132,38 @@ async function handleStudentLogin() {
                 if (classCode) {
                     await joinClass(classCode, userCredential.user.uid);
                 }
-                showNotification('Student login successful!');
+                showNotification('Welcome back, Student! 📚');
                 showStudentDashboard();
                 loadStudentClasses(userCredential.user.uid);
             } else {
                 signOut(auth);
                 showNotification('Access denied: Not a student account', 'error');
             }
+            showLoading(false);
         }, {
             onlyOnce: true
         });
     } catch (error) {
         console.error('Login error:', error);
         showNotification(`Login failed: ${error.message}`, 'error');
+        showLoading(false);
     }
 }
-
 
 // Updated registration handlers with better error handling
 async function registerTeacher() {
   try {
-    const email = document.getElementById('new-teacher-email').value;
+    const email = document.getElementById('new-teacher-email').value.trim();
     const password = document.getElementById('new-teacher-password').value;
     const confirmPassword = document.getElementById('new-teacher-password-confirm').value;
 
-    if (!email || !password) {
+    if (!email || !password || !confirmPassword) {
       showNotification('Please fill in all fields', 'error');
+      return;
+    }
+
+    if (password.length < 6) {
+      showNotification('Password must be at least 6 characters long', 'error');
       return;
     }
 
@@ -124,6 +171,8 @@ async function registerTeacher() {
       showNotification('Passwords do not match', 'error');
       return;
     }
+
+    showLoading(true);
 
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const userId = userCredential.user.uid;
@@ -132,9 +181,19 @@ async function registerTeacher() {
       await set(ref(database, `users/${userId}`), {
         email,
         role: 'teacher',
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        displayName: email.split('@')[0]
       });
-      showNotification('Teacher registration successful!');
+      showNotification('Teacher registration successful! Welcome aboard! 🎉');
+      
+      // Clear form
+      document.getElementById('new-teacher-email').value = '';
+      document.getElementById('new-teacher-password').value = '';
+      document.getElementById('new-teacher-password-confirm').value = '';
+      
+      // Hide registration form
+      document.getElementById('teacher-register-form').classList.add('hidden');
+      
     } catch (dbError) {
       console.error('Database write error:', dbError);
       showNotification('Account created but profile setup failed. Please contact support.', 'error');
@@ -142,17 +201,24 @@ async function registerTeacher() {
   } catch (authError) {
     console.error('Authentication error:', authError);
     showNotification(`Registration failed: ${authError.message}`, 'error');
+  } finally {
+    showLoading(false);
   }
 }
 
 async function registerStudent() {
   try {
-    const email = document.getElementById('new-student-email').value;
+    const email = document.getElementById('new-student-email').value.trim();
     const password = document.getElementById('new-student-password').value;
     const confirmPassword = document.getElementById('new-student-password-confirm').value;
 
-    if (!email || !password) {
+    if (!email || !password || !confirmPassword) {
       showNotification('Please fill in all fields', 'error');
+      return;
+    }
+
+    if (password.length < 6) {
+      showNotification('Password must be at least 6 characters long', 'error');
       return;
     }
 
@@ -161,6 +227,8 @@ async function registerStudent() {
       return;
     }
 
+    showLoading(true);
+
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const userId = userCredential.user.uid;
     
@@ -168,9 +236,19 @@ async function registerStudent() {
       await set(ref(database, `users/${userId}`), {
         email,
         role: 'student',
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        displayName: email.split('@')[0]
       });
-      showNotification('Student registration successful!');
+      showNotification('Student registration successful! Welcome! 🎉');
+      
+      // Clear form
+      document.getElementById('new-student-email').value = '';
+      document.getElementById('new-student-password').value = '';
+      document.getElementById('new-student-password-confirm').value = '';
+      
+      // Hide registration form
+      document.getElementById('student-register-form').classList.add('hidden');
+      
     } catch (dbError) {
       console.error('Database write error:', dbError);
       showNotification('Account created but profile setup failed. Please contact support.', 'error');
@@ -178,22 +256,39 @@ async function registerStudent() {
   } catch (authError) {
     console.error('Authentication error:', authError);
     showNotification(`Registration failed: ${authError.message}`, 'error');
+  } finally {
+    showLoading(false);
   }
 }
 
 // Toggle form visibility functions
 function showTeacherRegistration() {
-  document.getElementById('teacher-register-form').classList.remove('hidden');
-  document.getElementById('student-register-form').classList.add('hidden');
+  const teacherForm = document.getElementById('teacher-register-form');
+  const studentForm = document.getElementById('student-register-form');
+  
+  teacherForm.classList.remove('hidden');
+  studentForm.classList.add('hidden');
+  
+  // Smooth scroll to form
+  setTimeout(() => {
+    teacherForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
 }
 
 function showStudentRegistration() {
-  document.getElementById('student-register-form').classList.remove('hidden');
-  document.getElementById('teacher-register-form').classList.add('hidden');
+  const studentForm = document.getElementById('student-register-form');
+  const teacherForm = document.getElementById('teacher-register-form');
+  
+  studentForm.classList.remove('hidden');
+  teacherForm.classList.add('hidden');
+  
+  // Smooth scroll to form
+  setTimeout(() => {
+    studentForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
 }
 
 // Class management
-// Modify joinClass function
 async function joinClass(classCode, userId) {
     if (!classCode || !userId) {
         showNotification('Invalid class code or user ID', 'error');
@@ -205,19 +300,22 @@ async function joinClass(classCode, userId) {
         const classSnapshot = await get(classRef);
         
         if (!classSnapshot.exists()) {
-            showNotification('Invalid class code', 'error');
+            showNotification('Invalid class code. Please check and try again.', 'error');
             return;
         }
 
+        const classData = classSnapshot.val();
+
         // Add student to class
         await set(ref(database, `classes/${classCode}/students/${userId}`), {
-            joinedAt: Date.now()
+            joinedAt: Date.now(),
+            studentEmail: auth.currentUser.email
         });
 
         // Add class to student's enrolled classes
         await set(ref(database, `users/${userId}/enrolledClasses/${classCode}`), true);
 
-        showNotification('Successfully joined class!');
+        showNotification(`Successfully joined ${classData.name}! 🎉`);
         loadStudentClasses(userId);
     } catch (error) {
         console.error('Join class error:', error);
@@ -225,42 +323,27 @@ async function joinClass(classCode, userId) {
     }
 }
 
-
-async function setUserRole(email, role) {
-  try {
-    // Get the current user
-    const user = auth.currentUser;
-    if (!user) {
-      const userCredential = await signInWithEmailAndPassword(auth, email, prompt("Enter your password"));
-      user = userCredential.user;
-    }
-    
-    // Set the role in the database
-    await set(ref(database, `users/${user.uid}`), {
-      email: user.email,
-      role: role,
-      createdAt: Date.now()
-    });
-    
-    console.log("Role set successfully");
-    showNotification("Account role updated successfully!");
-  } catch (error) {
-    console.error("Error setting role:", error);
-    showNotification("Error updating role: " + error.message, "error");
-  }
-}
-
 // Add function to load student's classes
 async function loadStudentClasses(userId) {
     const studentClassesRef = ref(database, `users/${userId}/enrolledClasses`);
     const studentClassesList = document.getElementById('student-classes-list');
-    studentClassesList.innerHTML = '';
+    
+    if (!studentClassesList) return;
+    
+    studentClassesList.innerHTML = '<div class="loading-placeholder"><i class="fas fa-spinner fa-spin"></i> Loading classes...</div>';
 
     onValue(studentClassesRef, (snapshot) => {
         const enrolledClasses = snapshot.val();
+        studentClassesList.innerHTML = '';
         
         if (!enrolledClasses) {
-            studentClassesList.innerHTML = '<p>You are not enrolled in any classes yet</p>';
+            studentClassesList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-book-open empty-icon"></i>
+                    <h3>No Classes Yet</h3>
+                    <p>You haven't enrolled in any classes yet. Ask your teacher for a class code to get started!</p>
+                </div>
+            `;
             return;
         }
 
@@ -273,9 +356,21 @@ async function loadStudentClasses(userId) {
                     const classElement = document.createElement('div');
                     classElement.className = 'class-card';
                     classElement.innerHTML = `
-                        <h3>${classData.name}</h3>
-                        <p>Subject: ${classData.subject}</p>
-                        <button class="btn" onclick="handleViewClass('${classCode}')">View Class</button>
+                        <div class="class-card-header">
+                            <i class="fas fa-book class-card-icon"></i>
+                            <h3>${classData.name}</h3>
+                        </div>
+                        <div class="class-card-content">
+                            <p><i class="fas fa-tag"></i> Subject: ${classData.subject}</p>
+                            <p><i class="fas fa-user-tie"></i> Teacher: ${classData.teacherEmail}</p>
+                            <p><i class="fas fa-calendar-alt"></i> Joined: ${new Date(classData.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="class-card-actions">
+                            <button class="btn btn-primary" onclick="handleViewClass('${classCode}')">
+                                <i class="fas fa-eye"></i>
+                                View Class
+                            </button>
+                        </div>
                     `;
                     studentClassesList.appendChild(classElement);
                 }
@@ -321,13 +416,15 @@ async function createClass() {
         return;
     }
 
-    const className = document.getElementById('class-name').value;
-    const subject = document.getElementById('subject').value;
+    const className = document.getElementById('class-name').value.trim();
+    const subject = document.getElementById('subject').value.trim();
 
     if (!className || !subject) {
         showNotification('Please fill in all fields', 'error');
         return;
     }
+
+    showLoading(true);
 
     try {
         const classCode = generateClassCode();
@@ -337,7 +434,8 @@ async function createClass() {
             teacherId: user.uid,
             teacherEmail: user.email,
             createdAt: Date.now(),
-            classCode: classCode
+            classCode: classCode,
+            studentCount: 0
         };
 
         // Save class data
@@ -347,7 +445,9 @@ async function createClass() {
         const teacherClassRef = ref(database, `users/${user.uid}/classes/${classCode}`);
         await set(teacherClassRef, true);
 
-        showNotification('Class created successfully!');
+        showNotification(`Class "${className}" created successfully! 🎉`);
+        
+        // Clear form
         document.getElementById('class-name').value = '';
         document.getElementById('subject').value = '';
         
@@ -355,6 +455,8 @@ async function createClass() {
     } catch (error) {
         console.error('Error creating class:', error);
         showNotification(`Failed to create class: ${error.message}`, 'error');
+    } finally {
+        showLoading(false);
     }
 }
 
@@ -364,20 +466,27 @@ async function loadTeacherClasses() {
     if (!user) return;
 
     const classesList = document.getElementById('classes-list');
-    classesList.innerHTML = '';
+    if (!classesList) return;
+    
+    classesList.innerHTML = '<div class="loading-placeholder"><i class="fas fa-spinner fa-spin"></i> Loading classes...</div>';
 
     const teacherClassesRef = ref(database, `users/${user.uid}/classes`);
     
     onValue(teacherClassesRef, (snapshot) => {
         const classesData = snapshot.val();
-        classesList.innerHTML = ''; // Clear list before adding classes
+        classesList.innerHTML = '';
         
         if (!classesData) {
-            classesList.innerHTML = '<p>No classes created yet</p>';
+            classesList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-chalkboard-teacher empty-icon"></i>
+                    <h3>No Classes Yet</h3>
+                    <p>Create your first class to get started with teaching!</p>
+                </div>
+            `;
             return;
         }
 
-        // Use a Set to track unique class codes
         const processedClasses = new Set();
 
         Object.keys(classesData).forEach(classCode => {
@@ -385,16 +494,36 @@ async function loadTeacherClasses() {
                 processedClasses.add(classCode);
                 const classRef = ref(database, `classes/${classCode}`);
                 
-                onValue(classRef, (classSnapshot) => {
+                onValue(classRef, async (classSnapshot) => {
                     const classData = classSnapshot.val();
                     if (classData) {
+                        // Get student count
+                        const studentsRef = ref(database, `classes/${classCode}/students`);
+                        const studentsSnapshot = await get(studentsRef);
+                        const studentCount = studentsSnapshot.exists() ? Object.keys(studentsSnapshot.val()).length : 0;
+                        
                         const classElement = document.createElement('div');
                         classElement.className = 'class-card';
                         classElement.innerHTML = `
-                            <h3>${classData.name}</h3>
-                            <p>Subject: ${classData.subject}</p>
-                            <p>Class Code: <span class="class-code">${classData.classCode}</span></p>
-                            <button class="btn" onclick="handleViewClass('${classData.classCode}')">View Class</button>
+                            <div class="class-card-header">
+                                <i class="fas fa-book class-card-icon"></i>
+                                <h3>${classData.name}</h3>
+                            </div>
+                            <div class="class-card-content">
+                                <p><i class="fas fa-tag"></i> Subject: ${classData.subject}</p>
+                                <p><i class="fas fa-users"></i> Students: ${studentCount}</p>
+                                <p><i class="fas fa-calendar-alt"></i> Created: ${new Date(classData.createdAt).toLocaleDateString()}</p>
+                                <div class="class-code">
+                                    <i class="fas fa-key"></i>
+                                    ${classData.classCode}
+                                </div>
+                            </div>
+                            <div class="class-card-actions">
+                                <button class="btn btn-primary" onclick="handleViewClass('${classData.classCode}')">
+                                    <i class="fas fa-eye"></i>
+                                    View Class
+                                </button>
+                            </div>
                         `;
                         classesList.appendChild(classElement);
                     }
@@ -409,6 +538,8 @@ async function handleViewClass(classCode) {
     const classRef = ref(database, `classes/${classCode}`);
     const studentsRef = ref(database, `classes/${classCode}/students`);
     const assignmentsRef = ref(database, `classes/${classCode}/assignments`);
+    
+    showLoading(true);
     
     try {
         const [classSnapshot, studentsSnapshot, assignmentsSnapshot] = await Promise.all([
@@ -430,25 +561,55 @@ async function handleViewClass(classCode) {
         classView.id = 'class-view';
         classView.className = 'class-view glass';
         classView.innerHTML = `
-            <button class="btn back-button" onclick="backToClasses()">← Back to Classes</button>
-            <h2>${classData.name}</h2>
-            <p>Subject: ${classData.subject}</p>
-            <p>Students Enrolled: ${studentCount}</p>
+            <div class="class-view-header">
+                <button class="btn back-button" onclick="backToClasses()">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Classes
+                </button>
+                <div class="class-info">
+                    <div class="class-title">
+                        <i class="fas fa-book class-title-icon"></i>
+                        <h2>${classData.name}</h2>
+                    </div>
+                    <div class="class-meta">
+                        <span class="meta-item">
+                            <i class="fas fa-tag"></i>
+                            ${classData.subject}
+                        </span>
+                        <span class="meta-item">
+                            <i class="fas fa-users"></i>
+                            ${studentCount} Students
+                        </span>
+                        <span class="class-code">
+                            <i class="fas fa-key"></i>
+                            ${classData.classCode}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
             <div class="assignments-section">
-                <h3>Assignments</h3>
+                <div class="section-header">
+                    <i class="fas fa-file-alt section-icon"></i>
+                    <h3>Assignments</h3>
+                </div>
+                
                 <div class="upload-assignment">
                     <input type="file" 
                            id="assignment-file" 
-                           accept=".pdf,.doc,.docx,.txt" 
+                           accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx" 
                            style="display: none;">
-                    <button class="btn" onclick="document.getElementById('assignment-file').click()">
+                    <button class="btn btn-outline" onclick="document.getElementById('assignment-file').click()">
+                        <i class="fas fa-paperclip"></i>
                         Choose File
                     </button>
                     <span id="selected-file-name">No file chosen</span>
-                    <button class="btn" onclick="uploadAssignment('${classCode}')">
+                    <button class="btn btn-primary" onclick="uploadAssignment('${classCode}')">
+                        <i class="fas fa-upload"></i>
                         Upload
                     </button>
                 </div>
+                
                 <div id="assignments-list" class="assignments-list">
                     ${renderAssignments(assignmentsData)}
                 </div>
@@ -457,37 +618,76 @@ async function handleViewClass(classCode) {
         
         document.querySelector('.classes-section').appendChild(classView);
 
-        // Add file input change listener to update the display text
+        // Add file input change listener
         const fileInput = classView.querySelector('#assignment-file');
         const fileNameDisplay = classView.querySelector('#selected-file-name');
         
         fileInput.addEventListener('change', (e) => {
             const fileName = e.target.files[0]?.name || 'No file chosen';
             fileNameDisplay.textContent = fileName;
+            fileNameDisplay.style.color = e.target.files[0] ? 'var(--text-primary)' : 'var(--text-muted)';
         });
 
     } catch (error) {
         console.error('Error viewing class:', error);
         showNotification('Error loading class details', 'error');
+    } finally {
+        showLoading(false);
     }
 }
 
 // Add function to render assignments
 function renderAssignments(assignments) {
     if (!assignments) {
-        return '<p>No assignments uploaded yet</p>';
+        return `
+            <div class="empty-state">
+                <i class="fas fa-file-alt empty-icon"></i>
+                <h4>No Assignments Yet</h4>
+                <p>Upload your first assignment to get started!</p>
+            </div>
+        `;
     }
 
     return Object.entries(assignments).map(([id, assignment]) => `
         <div class="assignment-item">
-            <span class="assignment-name">${assignment.fileName}</span>
+            <div class="assignment-info">
+                <div class="assignment-icon">
+                    <i class="fas fa-file-${getFileIcon(assignment.fileName)}"></i>
+                </div>
+                <div class="assignment-details">
+                    <span class="assignment-name">${assignment.fileName}</span>
+                    <span class="assignment-date">
+                        <i class="fas fa-clock"></i>
+                        Uploaded ${new Date(assignment.uploadedAt).toLocaleDateString()}
+                    </span>
+                </div>
+            </div>
             <div class="assignment-actions">
-                <button class="btn download-btn" onclick="downloadAssignment('${assignment.downloadURL}', '${assignment.fileName}')">
-                    <i class="fas fa-download"></i> Download
+                <button class="btn btn-outline download-btn" onclick="downloadAssignment('${assignment.downloadURL}', '${assignment.fileName}')">
+                    <i class="fas fa-download"></i>
+                    Download
                 </button>
             </div>
         </div>
     `).join('');
+}
+
+// Helper function to get file icon based on extension
+function getFileIcon(fileName) {
+    const extension = fileName.split('.').pop().toLowerCase();
+    const iconMap = {
+        'pdf': 'pdf',
+        'doc': 'word',
+        'docx': 'word',
+        'ppt': 'powerpoint',
+        'pptx': 'powerpoint',
+        'xls': 'excel',
+        'xlsx': 'excel',
+        'txt': 'alt',
+        'zip': 'archive',
+        'rar': 'archive'
+    };
+    return iconMap[extension] || 'alt';
 }
 
 // Add upload assignment functionality
@@ -500,11 +700,21 @@ async function uploadAssignment(classCode) {
         return;
     }
 
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showNotification('File size must be less than 10MB', 'error');
+        return;
+    }
+
+    showLoading(true);
+
     try {
-        showNotification('Uploading assignment...', 'success');
+        showNotification('Uploading assignment...', 'info');
         
-        // Create a storage reference
-        const fileStorageRef = storageRef(storage, `assignments/${classCode}/${file.name}`);
+        // Create a storage reference with timestamp to avoid conflicts
+        const timestamp = Date.now();
+        const fileName = `${timestamp}_${file.name}`;
+        const fileStorageRef = storageRef(storage, `assignments/${classCode}/${fileName}`);
         
         // Upload file
         const snapshot = await uploadBytes(fileStorageRef, file);
@@ -516,12 +726,15 @@ async function uploadAssignment(classCode) {
         
         await set(newAssignmentRef, {
             fileName: file.name,
+            originalFileName: file.name,
             downloadURL: downloadURL,
             uploadedAt: Date.now(),
-            uploadedBy: auth.currentUser.uid
+            uploadedBy: auth.currentUser.uid,
+            fileSize: file.size,
+            fileType: file.type
         });
 
-        showNotification('Assignment uploaded successfully!');
+        showNotification(`Assignment "${file.name}" uploaded successfully! 🎉`);
         
         // Refresh assignments list
         const assignmentsSnapshot = await get(assignmentRef);
@@ -530,16 +743,25 @@ async function uploadAssignment(classCode) {
         
         // Clear file input
         fileInput.value = '';
+        document.getElementById('selected-file-name').textContent = 'No file chosen';
+        document.getElementById('selected-file-name').style.color = 'var(--text-muted)';
+        
     } catch (error) {
         console.error('Error uploading assignment:', error);
         showNotification('Failed to upload assignment: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
     }
 }
 
 // Add download assignment functionality
 async function downloadAssignment(downloadURL, fileName) {
     try {
+        showNotification('Downloading file...', 'info');
+        
         const response = await fetch(downloadURL);
+        if (!response.ok) throw new Error('Download failed');
+        
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -549,6 +771,8 @@ async function downloadAssignment(downloadURL, fileName) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        
+        showNotification(`Downloaded "${fileName}" successfully! 📥`);
     } catch (error) {
         console.error('Error downloading assignment:', error);
         showNotification('Failed to download assignment', 'error');
@@ -566,15 +790,17 @@ function backToClasses() {
 
 async function logoutUser() {
     try {
+        showLoading(true);
         await signOut(auth);
         showAuthSection();
-        showNotification('Logged out successfully');
+        showNotification('Logged out successfully. See you soon! 👋');
     } catch (error) {
         console.error('Logout error:', error);
         showNotification(`Logout failed: ${error.message}`, 'error');
+    } finally {
+        showLoading(false);
     }
 }
-
 
 // Auth state observer
 onAuthStateChanged(auth, (user) => {
@@ -588,7 +814,7 @@ onAuthStateChanged(auth, (user) => {
                     loadTeacherClasses();
                 } else if (userData.role === 'student') {
                     showStudentDashboard();
-                    // Load student classes (implement this function)
+                    loadStudentClasses(user.uid);
                 }
             }
         });
@@ -604,13 +830,9 @@ window.registerTeacher = registerTeacher;
 window.registerStudent = registerStudent;
 window.showTeacherRegistration = showTeacherRegistration;
 window.showStudentRegistration = showStudentRegistration;
-// Add this to your window exports
-window.setUserRole = setUserRole;
 window.createClass = createClass;
-// Add to window exports
 window.handleViewClass = handleViewClass;
 window.backToClasses = backToClasses;
-// Add to window exports
 window.uploadAssignment = uploadAssignment;
 window.downloadAssignment = downloadAssignment;
 window.logoutUser = logoutUser;
