@@ -1,5 +1,14 @@
 {
+  "name": "project",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "live-server --port=3000 --open=index.html",
+    "start": "live-server --port=3000 --open=index.html"
+  },
   "dependencies": {
     "firebase": "^9.23.0"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
   }
 }
